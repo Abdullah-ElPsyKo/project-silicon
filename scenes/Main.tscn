@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://bo6bllbn66xts"]
+
+[ext_resource type="Script" uid="uid://bdoo1qgqfncgg" path="res://scripts/world/GridWorld.cs" id="1_rvslj"]
+[ext_resource type="Script" uid="uid://cbpgkqqmyx0m" path="res://scripts/camera/CameraController.cs" id="2_0bbpv"]
+[ext_resource type="Script" uid="uid://5wtnwivry70u" path="res://scripts/world/BuildLayer.cs" id="2_rarhs"]
+
+[node name="Main" type="Node2D" unique_id=1407831428]
+
+[node name="World" type="Node2D" parent="." unique_id=721214962]
+script = ExtResource("1_rvslj")
+
+[node name="BuildLayer" type="Node2D" parent="World" unique_id=57095425]
+script = ExtResource("2_rarhs")
+
+[node name="GameCamera" type="Camera2D" parent="." unique_id=1305726507]
+position = Vector2(800, 450)
+script = ExtResource("2_0bbpv")
