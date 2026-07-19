@@ -1,6 +1,6 @@
 using Godot;
 
-namespace ProjectSilicon.scripts.camera;
+namespace ProjectSilicon.Scripts.Camera;
 
 public partial class CameraController : Camera2D
 {

@@ -1,6 +1,6 @@
 using Godot;
 
-namespace ProjectSilicon.scripts.world;
+namespace ProjectSilicon.Scripts.World;
 
 public partial class GridWorld : Node2D
 {
