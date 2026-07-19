@@ -12,15 +12,25 @@ public partial class BuildLayer : Node2D
 	public Label? ResourceLabel { get; set; }
 
 	private readonly Dictionary<Vector2I, MachineType> _machines = new();
+	private readonly Dictionary<ResourceType, int> _resources = new()
+	{
+		[ResourceType.Silica] = 0,
+		[ResourceType.Silicon] = 0,
+		[ResourceType.SiliconCrystal] = 0
+	};
+	
+	private static readonly MachineType[] ProductionOrder =
+	{
+		MachineType.SilicaExtractor,
+		MachineType.SiliconSmelter,
+		MachineType.CrystalGrower
+	};
 
 	private Vector2I _hoveredCell;
 	private MachineType _selectedMachine = MachineType.SilicaExtractor;
 
 	private double _productionTimer;
-
-	private int _silica;
-	private int _silicon;
-	private int _siliconCrystal;
+	
 
 	public override void _Ready()
 	{
@@ -120,53 +130,41 @@ public partial class BuildLayer : Node2D
 			RunProductionCycle();
 		}
 	}
-
+	
 	private void RunProductionCycle()
 	{
-		const int smelterSilicaCost = 2;
-		const int crystalGrowerSiliconCost = 3;
-
-		foreach (MachineType machineType in _machines.Values)
+		foreach (MachineType machineType in ProductionOrder)
 		{
-			if (machineType == MachineType.SilicaExtractor)
+			foreach (MachineType placedMachine in _machines.Values)
 			{
-				_silica++;
+				if (placedMachine != machineType)
+				{
+					continue;
+				}
+
+				RunMachineRecipe(machineType);
 			}
 		}
-
-		foreach (MachineType machineType in _machines.Values)
-		{
-			if (machineType != MachineType.SiliconSmelter)
-			{
-				continue;
-			}
-
-			if (_silica < smelterSilicaCost)
-			{
-				continue;
-			}
-
-			_silica -= smelterSilicaCost;
-			_silicon++;
-		}
-
-		foreach (MachineType machineType in _machines.Values)
-		{
-			if (machineType != MachineType.CrystalGrower)
-			{
-				continue;
-			}
-
-			if (_silicon < crystalGrowerSiliconCost)
-			{
-				continue;
-			}
-
-			_silicon -= crystalGrowerSiliconCost;
-			_siliconCrystal++;
-		}
-
+		
 		UpdateResourceLabel();
+	}
+
+	private void RunMachineRecipe(MachineType machineType)
+	{
+		MachineDefinition machine = MachineDatabase.Get(machineType);
+		RecipeDefinition recipe = machine.Recipe;
+
+		if (recipe.InputResource is ResourceType inputResource)
+		{
+			if (_resources[inputResource] < recipe.InputAmount)
+			{
+				return;
+			}
+
+			_resources[inputResource] -= recipe.InputAmount;
+		}
+
+		_resources[recipe.OutputResource] += recipe.OutputAmount;
 	}
 
 	private void PlaceMachine(Vector2I cell)
@@ -193,9 +191,9 @@ public partial class BuildLayer : Node2D
 		}
 
 		ResourceLabel.Text = $"""
-			Silica: {_silica}
-			Silicon: {_silicon}
-			Silicon Crystal: {_siliconCrystal}
+			Silica: {_resources[ResourceType.Silica]}
+			Silicon: {_resources[ResourceType.Silicon]}
+			Silicon Crystal: {_resources[ResourceType.SiliconCrystal]}
 
 			[1] Silica Extractor
 			[2] Silicon Smelter

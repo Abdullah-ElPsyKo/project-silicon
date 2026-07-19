@@ -10,13 +10,18 @@ public sealed class MachineDefinition
 
 	public string Description { get; }
 
+	public RecipeDefinition Recipe { get; }
+	
 	public MachineDefinition(
 		string name,
 		Color color,
-		string description)
+		string description,
+		RecipeDefinition recipe
+		)
 	{
 		Name = name;
 		Color = color;
 		Description = description;
+		Recipe = recipe;
 	}
 }
