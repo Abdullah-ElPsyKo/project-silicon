@@ -1,5 +1,6 @@
-using Godot;
 using System.Collections.Generic;
+using Godot;
+
 
 namespace ProjectSilicon.Scripts.World;
 
@@ -11,7 +12,7 @@ public partial class BuildLayer : Node2D
 	[Export]
 	public Label? ResourceLabel { get; set; }
 
-	private readonly Dictionary<Vector2I, MachineType> _machines = new();
+	private readonly Dictionary<Vector2I, MachineInstance> _machines = new();
 	private readonly Dictionary<ResourceType, int> _resources = new()
 	{
 		[ResourceType.Silica] = 0,
@@ -135,24 +136,24 @@ public partial class BuildLayer : Node2D
 	{
 		foreach (MachineType machineType in ProductionOrder)
 		{
-			foreach (MachineType placedMachine in _machines.Values)
+			foreach (MachineInstance machine in _machines.Values)
 			{
-				if (placedMachine != machineType)
+				if (machine.Type != machineType)
 				{
 					continue;
 				}
 
-				RunMachineRecipe(machineType);
+				RunMachineRecipe(machine);
 			}
 		}
 		
 		UpdateResourceLabel();
 	}
 
-	private void RunMachineRecipe(MachineType machineType)
+	private void RunMachineRecipe(MachineInstance machine)
 	{
-		MachineDefinition machine = MachineDatabase.Get(machineType);
-		RecipeDefinition recipe = machine.Recipe;
+		MachineDefinition definition = MachineDatabase.Get(machine.Type);
+		RecipeDefinition recipe = definition.Recipe;
 
 		if (recipe.InputResource is ResourceType inputResource)
 		{
@@ -169,10 +170,17 @@ public partial class BuildLayer : Node2D
 
 	private void PlaceMachine(Vector2I cell)
 	{
-		if (_machines.TryAdd(cell, _selectedMachine))
+		if (_machines.ContainsKey(cell))
 		{
-			QueueRedraw();
+			return;
 		}
+
+		_machines.Add(
+			cell,
+			new MachineInstance(_selectedMachine)
+		);
+
+		QueueRedraw();
 	}
 
 	private void RemoveMachine(Vector2I cell)
@@ -211,10 +219,10 @@ public partial class BuildLayer : Node2D
 
 	private void DrawMachines()
 	{
-		foreach ((Vector2I cell, MachineType machineType) in _machines)
+		foreach ((Vector2I cell, MachineInstance machine) in _machines)
 		{
 			Rect2 machineRect = GetCellRectangle(cell).Grow(-3);
-			MachineDefinition definition = MachineDatabase.Get(machineType);
+			MachineDefinition definition = MachineDatabase.Get(machine.Type);
 
 			DrawRect(machineRect, definition.Color);
 
