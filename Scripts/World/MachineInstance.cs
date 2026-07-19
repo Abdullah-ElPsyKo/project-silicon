@@ -5,11 +5,11 @@ namespace ProjectSilicon.Scripts.World;
 public sealed class MachineInstance
 {
     public MachineType Type { get; }
-
-    public Dictionary<ResourceType, int> InputBuffer { get; } = new();
-
-    public Dictionary<ResourceType, int> OutputBuffer { get; } = new();
-
+    
+    public double ProductionProgress { get; set; }
+    
+    public bool IsProducing { get; set; }
+    
     public MachineInstance(MachineType type)
     {
         Type = type;

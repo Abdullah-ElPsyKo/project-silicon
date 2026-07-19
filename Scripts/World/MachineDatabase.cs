@@ -16,7 +16,8 @@ public static class MachineDatabase
                     inputResource: null,
                     inputAmount: 0,
                     outputAmount: 1,
-                    outputResource: ResourceType.Silica
+                    outputResource: ResourceType.Silica,
+                    duration: 1.0
                     )
             ),
 
@@ -28,7 +29,8 @@ public static class MachineDatabase
                     inputResource: ResourceType.Silica,
                     inputAmount: 2,
                     outputAmount: 1,
-                    outputResource: ResourceType.Silicon
+                    outputResource: ResourceType.Silicon,
+                    duration: 1.0
                 )
             ),
 
@@ -40,7 +42,8 @@ public static class MachineDatabase
                     inputResource: ResourceType.Silicon,
                     inputAmount: 3,
                     outputAmount: 1,
-                    outputResource: ResourceType.SiliconCrystal
+                    outputResource: ResourceType.SiliconCrystal,
+                    duration: 1.0
                 )
             )
         };

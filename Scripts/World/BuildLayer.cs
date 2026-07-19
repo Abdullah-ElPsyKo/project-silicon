@@ -117,23 +117,6 @@ public partial class BuildLayer : Node2D
 
 	private void RunProduction(double delta)
 	{
-		if (_machines.Count == 0)
-		{
-			_productionTimer = 0.0;
-			return;
-		}
-
-		_productionTimer += delta;
-
-		while (_productionTimer >= ProductionInterval)
-		{
-			_productionTimer -= ProductionInterval;
-			RunProductionCycle();
-		}
-	}
-	
-	private void RunProductionCycle()
-	{
 		foreach (MachineType machineType in ProductionOrder)
 		{
 			foreach (MachineInstance machine in _machines.Values)
@@ -143,29 +126,55 @@ public partial class BuildLayer : Node2D
 					continue;
 				}
 
-				RunMachineRecipe(machine);
+				UpdateMachineProduction(machine, delta);
 			}
 		}
-		
+
 		UpdateResourceLabel();
 	}
-
-	private void RunMachineRecipe(MachineInstance machine)
+	
+	private void UpdateMachineProduction(
+		MachineInstance machine,
+		double delta)
 	{
 		MachineDefinition definition = MachineDatabase.Get(machine.Type);
 		RecipeDefinition recipe = definition.Recipe;
 
+		if (!machine.IsProducing)
+		{
+			if (!TryStartProduction(machine, recipe))
+			{
+				return;
+			}
+		}
+
+		machine.ProductionProgress += delta;
+
+		if (machine.ProductionProgress < recipe.Duration)
+		{
+			return;
+		}
+
+		_resources[recipe.OutputResource] += recipe.OutputAmount;
+
+		machine.ProductionProgress = 0.0;
+		machine.IsProducing = false;
+	}
+
+	private bool TryStartProduction(MachineInstance machine, RecipeDefinition recipe)
+	{
 		if (recipe.InputResource is ResourceType inputResource)
 		{
 			if (_resources[inputResource] < recipe.InputAmount)
 			{
-				return;
+				return false;
 			}
 
 			_resources[inputResource] -= recipe.InputAmount;
 		}
 
-		_resources[recipe.OutputResource] += recipe.OutputAmount;
+		machine.IsProducing = true;
+		return true;
 	}
 
 	private void PlaceMachine(Vector2I cell)
