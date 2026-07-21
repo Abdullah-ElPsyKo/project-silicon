@@ -13,6 +13,7 @@ public partial class BuildLayer : Node2D
 	public Label? ResourceLabel { get; set; }
 
 	private readonly Dictionary<Vector2I, MachineInstance> _machines = new();
+	private readonly Dictionary<Vector2I, BeltInstance> _belts = new();
 	private readonly Dictionary<ResourceType, int> _resources = new()
 	{
 		[ResourceType.Silica] = 0,
@@ -42,9 +43,13 @@ public partial class BuildLayer : Node2D
 	{
 		UpdateHoveredCell();
 		RunProduction(delta);
+		UpdateBelts(delta);
 		QueueRedraw();
 	}
 
+
+	// INPUT LOGIC
+	
 	public override void _UnhandledInput(InputEvent inputEvent)
 	{
 		if (inputEvent is InputEventKey keyEvent && keyEvent.Pressed)
@@ -116,6 +121,8 @@ public partial class BuildLayer : Node2D
 		QueueRedraw();
 	}
 
+	// PRODUCTION LOGIC
+	
 	private void RunProduction(double delta)
 	{
 		foreach (MachineType machineType in ProductionOrder)
@@ -178,6 +185,8 @@ public partial class BuildLayer : Node2D
 		machine.IsProducing = true;
 		return true;
 	}
+	
+	// PLACE MACHINE LOGIC
 
 	private void PlaceMachine(Vector2I cell)
 	{
@@ -200,6 +209,8 @@ public partial class BuildLayer : Node2D
 			QueueRedraw();
 		}
 	}
+	
+	// UPDATE VISUALS
 
 	private void UpdateResourceLabel()
 	{
@@ -325,4 +336,73 @@ public partial class BuildLayer : Node2D
 			TileSize
 		);
 	}
+	
+	
+	// BELT LOGIC:
+	
+	private static Vector2I GetDirectionOffset(Direction direction)
+	{
+		return direction switch
+		{
+			Direction.Up => Vector2I.Up,
+			Direction.Right => Vector2I.Right,
+			Direction.Down => Vector2I.Down,
+			Direction.Left => Vector2I.Left,
+			_ => Vector2I.Zero
+		};
+	}
+	
+	private void UpdateBelts(double delta)
+	{
+		List<(BeltInstance Source, BeltInstance Destination)> transfers = new();
+		
+		// Phase 1: Advance all belts.
+		foreach (BeltInstance belt in _belts.Values)
+		{
+			belt.Advance(delta);
+		}
+		
+		// Phase 2: Look for all possible transfers.
+		foreach (KeyValuePair<Vector2I, BeltInstance> entry in _belts)
+		{
+			Vector2I position = entry.Key;
+			BeltInstance sourceBelt = entry.Value;
+
+			if (sourceBelt.CurrentItem == null)
+				continue;
+
+			if (sourceBelt.ItemProgress < 1.0)
+				continue;
+
+			Vector2I directionOffset =
+				GetDirectionOffset(sourceBelt.BeltDirection);
+
+			Vector2I destinationPosition =
+				position + directionOffset;
+
+			if (!_belts.TryGetValue(
+				    destinationPosition,
+				    out BeltInstance? destinationBelt))
+			{
+				continue;
+			}
+
+			if (!destinationBelt.IsEmpty)
+				continue;
+
+			transfers.Add((sourceBelt, destinationBelt));
+		}
+		
+		// Phase 3: Execute transfers.
+		foreach ((BeltInstance source, BeltInstance destination) in transfers)
+		{
+			ResourceType item = source.CurrentItem.Value;
+
+			if (!destination.TryPlaceItem(item))
+				continue;
+
+			source.TakeItem();
+		}
+	}
+
 }
