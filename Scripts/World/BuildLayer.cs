@@ -42,6 +42,7 @@ public partial class BuildLayer : Node2D
 	{
 		UpdateHoveredCell();
 		RunProduction(delta);
+		QueueRedraw();
 	}
 
 	public override void _UnhandledInput(InputEvent inputEvent)
@@ -155,8 +156,11 @@ public partial class BuildLayer : Node2D
 			return;
 		}
 
-		_resources[recipe.OutputResource] += recipe.OutputAmount;
-
+		machine.AddOutput(
+			recipe.OutputResource,
+			recipe.OutputAmount
+		);
+		
 		machine.ProductionProgress = 0.0;
 		machine.IsProducing = false;
 	}
@@ -165,12 +169,10 @@ public partial class BuildLayer : Node2D
 	{
 		if (recipe.InputResource is ResourceType inputResource)
 		{
-			if (_resources[inputResource] < recipe.InputAmount)
+			if (!machine.TryConsumeInput(inputResource, recipe.InputAmount))
 			{
 				return false;
 			}
-
-			_resources[inputResource] -= recipe.InputAmount;
 		}
 
 		machine.IsProducing = true;
@@ -183,11 +185,10 @@ public partial class BuildLayer : Node2D
 		{
 			return;
 		}
+		
+		MachineInstance machine = new(_selectedMachine);
 
-		_machines.Add(
-			cell,
-			new MachineInstance(_selectedMachine)
-		);
+		_machines.Add(cell, machine);
 
 		QueueRedraw();
 	}
@@ -232,7 +233,7 @@ public partial class BuildLayer : Node2D
 		{
 			Rect2 machineRect = GetCellRectangle(cell).Grow(-3);
 			MachineDefinition definition = MachineDatabase.Get(machine.Type);
-
+			// GD.Print(machine.IsProducing);
 			DrawRect(machineRect, definition.Color);
 
 			DrawRect(
@@ -241,7 +242,45 @@ public partial class BuildLayer : Node2D
 				filled: false,
 				width: 2
 			);
+			DrawMachineProgress(machineRect, machine);
 		}
+	}
+
+	private void DrawMachineProgress(
+		Rect2 machineRect,
+		MachineInstance machine)
+	{
+		if (!machine.IsProducing)
+		{
+			return;
+		}
+
+		MachineDefinition definition = MachineDatabase.Get(machine.Type);
+		RecipeDefinition recipe = definition.Recipe;
+		
+		float progress = (float)(
+			machine.ProductionProgress / recipe.Duration
+		);
+		
+		progress = Mathf.Clamp(progress, 0.0f, 1.0f);
+		
+		Rect2 backgroundBar = new(
+			machineRect.Position.X + 2,
+			machineRect.End.Y - 6,
+			machineRect.Size.X - 4,
+			4
+		);
+		
+		Rect2 filledBar = new(
+			backgroundBar.Position,
+			new Vector2(
+				backgroundBar.Size.X * progress,
+				backgroundBar.Size.Y
+			)
+		);
+		
+		DrawRect(backgroundBar, new Color(0.1f, 0.1f, 0.1f, 0.8f));
+		DrawRect(filledBar, new Color(0.9f, 0.9f, 0.9f));
 	}
 
 	private void DrawHoveredCell()
