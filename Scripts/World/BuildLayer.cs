@@ -32,6 +32,8 @@ public partial class BuildLayer : Node2D
 	private MachineType _selectedMachine = MachineType.SilicaExtractor;
 
 	private double _productionTimer;
+
+	private Direction _currentDirection = Direction.Down;
 	
 
 	public override void _Ready()
@@ -43,6 +45,7 @@ public partial class BuildLayer : Node2D
 	{
 		UpdateHoveredCell();
 		RunProduction(delta);
+		TransferMachineOutputsToBelts();
 		UpdateBelts(delta);
 		QueueRedraw();
 	}
@@ -67,6 +70,9 @@ public partial class BuildLayer : Node2D
 				case Key.Key3:
 					SelectMachine(MachineType.CrystalGrower);
 					break;
+				case Key.R:
+					RotateObject();
+					break;
 			}
 
 			return;
@@ -88,6 +94,17 @@ public partial class BuildLayer : Node2D
 				RemoveMachine(_hoveredCell);
 				break;
 		}
+	}
+
+	void RotateObject()
+	{
+		if (_currentDirection == Direction.Left)
+		{
+			_currentDirection = Direction.Up;
+			return;
+		}
+
+		_currentDirection++;
 	}
 
 	private void SelectMachine(MachineType machineType)
@@ -195,7 +212,7 @@ public partial class BuildLayer : Node2D
 			return;
 		}
 		
-		MachineInstance machine = new(_selectedMachine);
+		MachineInstance machine = new(_selectedMachine, _currentDirection);
 
 		_machines.Add(cell, machine);
 
@@ -207,6 +224,43 @@ public partial class BuildLayer : Node2D
 		if (_machines.Remove(cell))
 		{
 			QueueRedraw();
+		}
+	}
+	
+	private void TransferMachineOutputsToBelts()
+	{
+		foreach (KeyValuePair<Vector2I, MachineInstance> instance in _machines)
+		{
+			Vector2I machinePosition = instance.Key;
+			MachineInstance machine = instance.Value;
+
+			MachineDefinition definition = MachineDatabase.Get(machine.Type);
+			RecipeDefinition recipe = definition.Recipe;
+
+			Vector2I outputPosition =
+				machinePosition + GetDirectionOffset(machine.Direction);
+
+			if (!_belts.TryGetValue(outputPosition, out BeltInstance? belt))
+			{
+				continue;
+			}
+
+			if (!belt.IsEmpty)
+			{
+				continue;
+			}
+
+			ResourceType outputResource = recipe.OutputResource;
+			
+			// Check if there is an output.
+			if (machine.GetOutputAmount(outputResource) <= 0)
+				continue;
+
+			// Try to place the item on the belt
+			if (!belt.TryPlaceItem(outputResource))
+				continue;
+
+			machine.TryConsumeOutput(outputResource, 1);
 		}
 	}
 	
@@ -381,8 +435,8 @@ public partial class BuildLayer : Node2D
 				position + directionOffset;
 
 			if (!_belts.TryGetValue(
-				    destinationPosition,
-				    out BeltInstance? destinationBelt))
+					destinationPosition,
+					out BeltInstance? destinationBelt))
 			{
 				continue;
 			}

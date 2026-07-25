@@ -13,10 +13,13 @@ public sealed class MachineInstance
     public Dictionary<ResourceType, int> InputBuffer { get; } = new();
     
     public Dictionary<ResourceType, int> OutputBuffer { get; } = new();
+
+    public Direction Direction { get; }
     
-    public MachineInstance(MachineType type)
+    public MachineInstance(MachineType type, Direction direction)
     {
         Type = type;
+        Direction = direction;
     }
 
     public int GetInputAmount(ResourceType resource)
@@ -58,7 +61,16 @@ public sealed class MachineInstance
             InputBuffer[resource] -= amount;
             return true;
         }
-
+        
         return false;
+    }
+    
+    public bool TryConsumeOutput(ResourceType resource, int amount)
+    {
+        if (GetOutputAmount(resource) < amount)
+            return false;
+
+        OutputBuffer[resource] -= amount;
+        return true;
     }
 }
