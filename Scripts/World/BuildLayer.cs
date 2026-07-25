@@ -7,32 +7,16 @@ namespace ProjectSilicon.Scripts.World;
 public partial class BuildLayer : Node2D
 {
 	private const int TileSize = 32;
-	private const double ProductionInterval = 1.0;
 
 	[Export]
 	public Label? ResourceLabel { get; set; }
 
 	private readonly Dictionary<Vector2I, MachineInstance> _machines = new();
 	private readonly Dictionary<Vector2I, BeltInstance> _belts = new();
-	private readonly Dictionary<ResourceType, int> _resources = new()
-	{
-		[ResourceType.Silica] = 0,
-		[ResourceType.Silicon] = 0,
-		[ResourceType.SiliconCrystal] = 0
-	};
-	
-	private static readonly MachineType[] ProductionOrder =
-	{
-		MachineType.SilicaExtractor,
-		MachineType.SiliconSmelter,
-		MachineType.CrystalGrower
-	};
 
 	private Vector2I _hoveredCell;
 	private MachineType _selectedMachine = MachineType.SilicaExtractor;
-
-	private double _productionTimer;
-
+	
 	private Direction _currentDirection = Direction.Down;
 	
 
@@ -44,9 +28,9 @@ public partial class BuildLayer : Node2D
 	public override void _Process(double delta)
 	{
 		UpdateHoveredCell();
-		RunProduction(delta);
-		TransferMachineOutputsToBelts();
-		UpdateBelts(delta);
+
+		ProductionSystem.Update(_machines, delta);
+		BeltSystem.Update(_belts, delta);
 		QueueRedraw();
 	}
 
@@ -96,15 +80,19 @@ public partial class BuildLayer : Node2D
 		}
 	}
 
-	void RotateObject()
+	private void RotateObject()
 	{
 		if (_currentDirection == Direction.Left)
 		{
 			_currentDirection = Direction.Up;
-			return;
+		}
+		else
+		{
+			_currentDirection++;
 		}
 
-		_currentDirection++;
+		UpdateResourceLabel();
+		QueueRedraw();
 	}
 
 	private void SelectMachine(MachineType machineType)
@@ -137,77 +125,16 @@ public partial class BuildLayer : Node2D
 		_hoveredCell = newHoveredCell;
 		QueueRedraw();
 	}
-
-	// PRODUCTION LOGIC
-	
-	private void RunProduction(double delta)
-	{
-		foreach (MachineType machineType in ProductionOrder)
-		{
-			foreach (MachineInstance machine in _machines.Values)
-			{
-				if (machine.Type != machineType)
-				{
-					continue;
-				}
-
-				UpdateMachineProduction(machine, delta);
-			}
-		}
-
-		UpdateResourceLabel();
-	}
-	
-	private void UpdateMachineProduction(
-		MachineInstance machine,
-		double delta)
-	{
-		MachineDefinition definition = MachineDatabase.Get(machine.Type);
-		RecipeDefinition recipe = definition.Recipe;
-
-		if (!machine.IsProducing)
-		{
-			if (!TryStartProduction(machine, recipe))
-			{
-				return;
-			}
-		}
-
-		machine.ProductionProgress += delta;
-
-		if (machine.ProductionProgress < recipe.Duration)
-		{
-			return;
-		}
-
-		machine.AddOutput(
-			recipe.OutputResource,
-			recipe.OutputAmount
-		);
-		
-		machine.ProductionProgress = 0.0;
-		machine.IsProducing = false;
-	}
-
-	private bool TryStartProduction(MachineInstance machine, RecipeDefinition recipe)
-	{
-		if (recipe.InputResource is ResourceType inputResource)
-		{
-			if (!machine.TryConsumeInput(inputResource, recipe.InputAmount))
-			{
-				return false;
-			}
-		}
-
-		machine.IsProducing = true;
-		return true;
-	}
 	
 	// PLACE MACHINE LOGIC
 
 	private void PlaceMachine(Vector2I cell)
 	{
-		if (_machines.ContainsKey(cell))
+		bool occupied =
+			_machines.ContainsKey(cell) ||
+			_belts.ContainsKey(cell);
+		
+		if (occupied)
 		{
 			return;
 		}
@@ -227,62 +154,21 @@ public partial class BuildLayer : Node2D
 		}
 	}
 	
-	private void TransferMachineOutputsToBelts()
-	{
-		foreach (KeyValuePair<Vector2I, MachineInstance> instance in _machines)
-		{
-			Vector2I machinePosition = instance.Key;
-			MachineInstance machine = instance.Value;
-
-			MachineDefinition definition = MachineDatabase.Get(machine.Type);
-			RecipeDefinition recipe = definition.Recipe;
-
-			Vector2I outputPosition =
-				machinePosition + GetDirectionOffset(machine.Direction);
-
-			if (!_belts.TryGetValue(outputPosition, out BeltInstance? belt))
-			{
-				continue;
-			}
-
-			if (!belt.IsEmpty)
-			{
-				continue;
-			}
-
-			ResourceType outputResource = recipe.OutputResource;
-			
-			// Check if there is an output.
-			if (machine.GetOutputAmount(outputResource) <= 0)
-				continue;
-
-			// Try to place the item on the belt
-			if (!belt.TryPlaceItem(outputResource))
-				continue;
-
-			machine.TryConsumeOutput(outputResource, 1);
-		}
-	}
-	
 	// UPDATE VISUALS
 
 	private void UpdateResourceLabel()
 	{
 		if (ResourceLabel is null)
-		{
 			return;
-		}
 
 		ResourceLabel.Text = $"""
-			Silica: {_resources[ResourceType.Silica]}
-			Silicon: {_resources[ResourceType.Silicon]}
-			Silicon Crystal: {_resources[ResourceType.SiliconCrystal]}
-
 			[1] Silica Extractor
 			[2] Silicon Smelter
 			[3] Crystal Grower
+			[R] Rotate
 
 			Selected: {MachineDatabase.Get(_selectedMachine).Name}
+			Rotation: {_currentDirection}
 			""";
 	}
 
@@ -298,7 +184,6 @@ public partial class BuildLayer : Node2D
 		{
 			Rect2 machineRect = GetCellRectangle(cell).Grow(-3);
 			MachineDefinition definition = MachineDatabase.Get(machine.Type);
-			// GD.Print(machine.IsProducing);
 			DrawRect(machineRect, definition.Color);
 
 			DrawRect(
@@ -350,8 +235,10 @@ public partial class BuildLayer : Node2D
 
 	private void DrawHoveredCell()
 	{
-		bool occupied = _machines.ContainsKey(_hoveredCell);
-
+		bool occupied =
+			_machines.ContainsKey(_hoveredCell) ||
+			_belts.ContainsKey(_hoveredCell);
+		
 		Color hoverColor;
 
 		if (occupied)
@@ -390,73 +277,4 @@ public partial class BuildLayer : Node2D
 			TileSize
 		);
 	}
-	
-	
-	// BELT LOGIC:
-	
-	private static Vector2I GetDirectionOffset(Direction direction)
-	{
-		return direction switch
-		{
-			Direction.Up => Vector2I.Up,
-			Direction.Right => Vector2I.Right,
-			Direction.Down => Vector2I.Down,
-			Direction.Left => Vector2I.Left,
-			_ => Vector2I.Zero
-		};
-	}
-	
-	private void UpdateBelts(double delta)
-	{
-		List<(BeltInstance Source, BeltInstance Destination)> transfers = new();
-		
-		// Phase 1: Advance all belts.
-		foreach (BeltInstance belt in _belts.Values)
-		{
-			belt.Advance(delta);
-		}
-		
-		// Phase 2: Look for all possible transfers.
-		foreach (KeyValuePair<Vector2I, BeltInstance> entry in _belts)
-		{
-			Vector2I position = entry.Key;
-			BeltInstance sourceBelt = entry.Value;
-
-			if (sourceBelt.CurrentItem == null)
-				continue;
-
-			if (sourceBelt.ItemProgress < 1.0)
-				continue;
-
-			Vector2I directionOffset =
-				GetDirectionOffset(sourceBelt.BeltDirection);
-
-			Vector2I destinationPosition =
-				position + directionOffset;
-
-			if (!_belts.TryGetValue(
-					destinationPosition,
-					out BeltInstance? destinationBelt))
-			{
-				continue;
-			}
-
-			if (!destinationBelt.IsEmpty)
-				continue;
-
-			transfers.Add((sourceBelt, destinationBelt));
-		}
-		
-		// Phase 3: Execute transfers.
-		foreach ((BeltInstance source, BeltInstance destination) in transfers)
-		{
-			ResourceType item = source.CurrentItem.Value;
-
-			if (!destination.TryPlaceItem(item))
-				continue;
-
-			source.TakeItem();
-		}
-	}
-
 }
