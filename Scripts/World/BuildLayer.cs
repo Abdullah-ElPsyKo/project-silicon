@@ -15,8 +15,7 @@ public partial class BuildLayer : Node2D
 	private readonly Dictionary<Vector2I, BeltInstance> _belts = new();
 
 	private Vector2I _hoveredCell;
-	private MachineType _selectedMachine = MachineType.SilicaExtractor;
-	
+	private BuildObjectType _selectedObject = BuildObjectType.SilicaExtractor;
 	private Direction _currentDirection = Direction.Down;
 	
 
@@ -44,15 +43,19 @@ public partial class BuildLayer : Node2D
 			switch (keyEvent.Keycode)
 			{
 				case Key.Key1:
-					SelectMachine(MachineType.SilicaExtractor);
+					SelectObject(BuildObjectType.SilicaExtractor);
 					break;
 
 				case Key.Key2:
-					SelectMachine(MachineType.SiliconSmelter);
+					SelectObject(BuildObjectType.SiliconSmelter);
 					break;
 
 				case Key.Key3:
-					SelectMachine(MachineType.CrystalGrower);
+					SelectObject(BuildObjectType.CrystalGrower);
+					break;
+
+				case Key.Key4:
+					SelectObject(BuildObjectType.Belt);
 					break;
 				case Key.R:
 					RotateObject();
@@ -71,11 +74,11 @@ public partial class BuildLayer : Node2D
 		switch (mouseButton.ButtonIndex)
 		{
 			case MouseButton.Left:
-				PlaceMachine(_hoveredCell);
+				PlaceObject(_hoveredCell);
 				break;
 
 			case MouseButton.Right:
-				RemoveMachine(_hoveredCell);
+				RemoveObject(_hoveredCell);
 				break;
 		}
 	}
@@ -95,14 +98,11 @@ public partial class BuildLayer : Node2D
 		QueueRedraw();
 	}
 
-	private void SelectMachine(MachineType machineType)
-	{
-		if (_selectedMachine == machineType)
-		{
+	private void SelectObject(BuildObjectType objectType)	{
+		if (_selectedObject == objectType)
 			return;
-		}
 
-		_selectedMachine = machineType;
+		_selectedObject = objectType;
 
 		UpdateResourceLabel();
 		QueueRedraw();
@@ -126,32 +126,66 @@ public partial class BuildLayer : Node2D
 		QueueRedraw();
 	}
 	
-	// PLACE MACHINE LOGIC
+	// PLACE OBJECT LOGIC
 
-	private void PlaceMachine(Vector2I cell)
+	private void PlaceObject(Vector2I cell)
 	{
 		bool occupied =
 			_machines.ContainsKey(cell) ||
 			_belts.ContainsKey(cell);
-		
+
 		if (occupied)
-		{
 			return;
+
+		switch (_selectedObject)
+		{
+			case BuildObjectType.SilicaExtractor:
+				PlaceMachine(cell, MachineType.SilicaExtractor);
+				break;
+
+			case BuildObjectType.SiliconSmelter:
+				PlaceMachine(cell, MachineType.SiliconSmelter);
+				break;
+
+			case BuildObjectType.CrystalGrower:
+				PlaceMachine(cell, MachineType.CrystalGrower);
+				break;
+
+			case BuildObjectType.Belt:
+				PlaceBelt(cell);
+				break;
 		}
-		
-		MachineInstance machine = new(_selectedMachine, _currentDirection);
+	}
+	
+	private void PlaceMachine(
+		Vector2I cell,
+		MachineType objectType)
+	{
+		MachineInstance machine = new(
+			objectType,
+			_currentDirection
+		);
 
 		_machines.Add(cell, machine);
+	}
+	
+	private void PlaceBelt(Vector2I cell)
+	{
+		BeltInstance belt = new(
+			_currentDirection,
+			1.0
+		);
 
-		QueueRedraw();
+		_belts.Add(cell, belt);
 	}
 
-	private void RemoveMachine(Vector2I cell)
+	private void RemoveObject(Vector2I cell)
 	{
-		if (_machines.Remove(cell))
-		{
+		bool removedMachine = _machines.Remove(cell);
+		bool removedBelt = _belts.Remove(cell);
+
+		if (removedMachine || removedBelt)
 			QueueRedraw();
-		}
 	}
 	
 	// UPDATE VISUALS
@@ -165,16 +199,38 @@ public partial class BuildLayer : Node2D
 			[1] Silica Extractor
 			[2] Silicon Smelter
 			[3] Crystal Grower
+			[4] Belt
 			[R] Rotate
 
-			Selected: {MachineDatabase.Get(_selectedMachine).Name}
+			Selected: {GetSelectedObjectName()}
 			Rotation: {_currentDirection}
 			""";
+	}
+	
+	private string GetSelectedObjectName()
+	{
+		return _selectedObject switch
+		{
+			BuildObjectType.SilicaExtractor =>
+				MachineDatabase.Get(MachineType.SilicaExtractor).Name,
+
+			BuildObjectType.SiliconSmelter =>
+				MachineDatabase.Get(MachineType.SiliconSmelter).Name,
+
+			BuildObjectType.CrystalGrower =>
+				MachineDatabase.Get(MachineType.CrystalGrower).Name,
+
+			BuildObjectType.Belt =>
+				"Belt",
+
+			_ => "Unknown"
+		};
 	}
 
 	public override void _Draw()
 	{
 		DrawMachines();
+		DrawBelts();
 		DrawHoveredCell();
 	}
 
@@ -193,6 +249,54 @@ public partial class BuildLayer : Node2D
 				width: 2
 			);
 			DrawMachineProgress(machineRect, machine);
+		}
+	}
+	
+	private void DrawBelts()
+	{
+		foreach ((Vector2I cell, BeltInstance belt) in _belts)
+		{
+			Rect2 beltRect = GetCellRectangle(cell).Grow(-4);
+
+			DrawRect(
+				beltRect,
+				new Color(0.18f, 0.18f, 0.18f)
+			);
+
+			Vector2 center = beltRect.GetCenter();
+
+			Vector2 direction = belt.BeltDirection switch
+			{
+				Direction.Up => Vector2.Up,
+				Direction.Right => Vector2.Right,
+				Direction.Down => Vector2.Down,
+				Direction.Left => Vector2.Left,
+				_ => Vector2.Zero
+			};
+
+			Vector2 start = center - direction * 7;
+			Vector2 end = center + direction * 7;
+
+			DrawLine(
+				start,
+				end,
+				new Color(0.85f, 0.85f, 0.85f),
+				2
+			);
+
+			Vector2 perpendicular = new(
+				-direction.Y,
+				direction.X
+			);
+
+			Vector2 arrowLeft =
+				end - direction * 4 + perpendicular * 3;
+
+			Vector2 arrowRight =
+				end - direction * 4 - perpendicular * 3;
+
+			DrawLine(end, arrowLeft, new Color(0.85f, 0.85f, 0.85f), 2);
+			DrawLine(end, arrowRight, new Color(0.85f, 0.85f, 0.85f), 2);
 		}
 	}
 
@@ -238,7 +342,7 @@ public partial class BuildLayer : Node2D
 		bool occupied =
 			_machines.ContainsKey(_hoveredCell) ||
 			_belts.ContainsKey(_hoveredCell);
-		
+
 		Color hoverColor;
 
 		if (occupied)
@@ -252,12 +356,39 @@ public partial class BuildLayer : Node2D
 		}
 		else
 		{
-			Color machineColor = MachineDatabase.Get(_selectedMachine).Color;
+			Color objectColor;
+
+			if (_selectedObject == BuildObjectType.Belt)
+			{
+				objectColor = new Color(
+					0.3f,
+					0.3f,
+					0.3f
+				);
+			}
+			else
+			{
+				MachineType machineType = _selectedObject switch
+				{
+					BuildObjectType.SilicaExtractor =>
+						MachineType.SilicaExtractor,
+
+					BuildObjectType.SiliconSmelter =>
+						MachineType.SiliconSmelter,
+
+					BuildObjectType.CrystalGrower =>
+						MachineType.CrystalGrower,
+
+					_ => MachineType.SilicaExtractor
+				};
+
+				objectColor = MachineDatabase.Get(machineType).Color;
+			}
 
 			hoverColor = new Color(
-				machineColor.R,
-				machineColor.G,
-				machineColor.B,
+				objectColor.R,
+				objectColor.G,
+				objectColor.B,
 				0.45f
 			);
 		}
