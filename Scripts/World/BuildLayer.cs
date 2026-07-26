@@ -29,7 +29,7 @@ public partial class BuildLayer : Node2D
 		UpdateHoveredCell();
 
 		ProductionSystem.Update(_machines, delta);
-		BeltSystem.Update(_belts, delta);
+		BeltSystem.Update(_belts, delta, _machines);
 		QueueRedraw();
 	}
 
