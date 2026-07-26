@@ -179,14 +179,7 @@ public partial class BuildLayer : Node2D
 		_belts.Add(cell, belt);
 	}
 
-	private void RemoveObject(Vector2I cell)
-	{
-		bool removedMachine = _machines.Remove(cell);
-		bool removedBelt = _belts.Remove(cell);
-
-		if (removedMachine || removedBelt)
-			QueueRedraw();
-	}
+	
 	
 	// UPDATE VISUALS
 
@@ -297,7 +290,45 @@ public partial class BuildLayer : Node2D
 
 			DrawLine(end, arrowLeft, new Color(0.85f, 0.85f, 0.85f), 2);
 			DrawLine(end, arrowRight, new Color(0.85f, 0.85f, 0.85f), 2);
+			
+			DrawBeltItem(cell, belt);
 		}
+	}
+	
+	private void DrawBeltItem(Vector2I cell, BeltInstance belt)
+	{
+		if (belt.IsEmpty)
+		{
+			return;
+		}
+
+		Rect2 beltRect = GetCellRectangle(cell).Grow(-4);
+
+		Vector2 direction = belt.BeltDirection switch
+		{
+			Direction.Up => Vector2.Up,
+			Direction.Right => Vector2.Right,
+			Direction.Down => Vector2.Down,
+			Direction.Left => Vector2.Left,
+			_ => Vector2.Zero
+		};
+
+		float progress = (float)belt.ItemProgress;
+
+		Vector2 start = beltRect.GetCenter() - direction * 10;
+		Vector2 end = beltRect.GetCenter() + direction * 10;
+		Vector2 itemPosition = start.Lerp(end, progress);
+		
+		DrawCircle(itemPosition, 4, new Color(0.9f, 0.8f, 0.3f));
+	}
+
+	private void RemoveObject(Vector2I cell)
+	{
+		bool removedMachine = _machines.Remove(cell);
+		bool removedBelt = _belts.Remove(cell);
+
+		if (removedMachine || removedBelt)
+			QueueRedraw();
 	}
 
 	private void DrawMachineProgress(
