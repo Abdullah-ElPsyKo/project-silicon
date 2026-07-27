@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 
@@ -8,16 +9,17 @@ public partial class BuildLayer : Node2D
 {
 	private const int TileSize = 32;
 
-	[Export]
-	public Label? ResourceLabel { get; set; }
+	[Export] public Label? ResourceLabel { get; set; }
+	[Export] public Label? ObjectDetailsLabel { get; set; }
 
 	private readonly Dictionary<Vector2I, MachineInstance> _machines = new();
 	private readonly Dictionary<Vector2I, BeltInstance> _belts = new();
 
 	private Vector2I _hoveredCell;
+	private Vector2I? _inspectedCell;
 	private BuildObjectType _selectedObject = BuildObjectType.SilicaExtractor;
 	private Direction _currentDirection = Direction.Down;
-	
+
 
 	public override void _Ready()
 	{
@@ -30,12 +32,14 @@ public partial class BuildLayer : Node2D
 
 		ProductionSystem.Update(_machines, delta);
 		BeltSystem.Update(_belts, delta, _machines);
+
+		UpdateObjectDetailsLabel();
 		QueueRedraw();
 	}
 
 
 	// INPUT LOGIC
-	
+
 	public override void _UnhandledInput(InputEvent inputEvent)
 	{
 		if (inputEvent is InputEventKey keyEvent && keyEvent.Pressed)
@@ -80,6 +84,9 @@ public partial class BuildLayer : Node2D
 			case MouseButton.Right:
 				RemoveObject(_hoveredCell);
 				break;
+			case MouseButton.Middle:
+				ShowDetailsObject(_hoveredCell);
+				break;
 		}
 	}
 
@@ -98,7 +105,120 @@ public partial class BuildLayer : Node2D
 		QueueRedraw();
 	}
 
-	private void SelectObject(BuildObjectType objectType)	{
+	private void ShowDetailsObject(Vector2I cell)
+	{
+		_inspectedCell = cell;
+		UpdateObjectDetailsLabel();
+	}
+
+	private void UpdateObjectDetailsLabel()
+	{
+		if (ObjectDetailsLabel is null)
+			return;
+
+		if (_inspectedCell is not Vector2I cell)
+		{
+			ObjectDetailsLabel.Visible = false;
+			return;
+		}
+
+		if (_machines.TryGetValue(cell, out MachineInstance? machine))
+		{
+			DrawMachineDetails(machine);
+			return;
+		}
+
+		if (_belts.TryGetValue(cell, out BeltInstance? belt))
+		{
+			DrawBeltDetails(belt);
+			return;
+		}
+
+		ObjectDetailsLabel.Visible = false;
+		_inspectedCell = null;
+	}
+
+	private void DrawMachineDetails(MachineInstance machine)
+	{
+		if (ObjectDetailsLabel is null)
+			return;
+
+		MachineDefinition definition =
+			MachineDatabase.Get(machine.Type);
+
+		RecipeDefinition recipe =
+			definition.Recipe;
+
+		double progress =
+			recipe.Duration > 0
+				? machine.ProductionProgress / recipe.Duration
+				: 0.0;
+
+		string inputText = "Empty";
+
+		if (recipe.InputResource is ResourceType inputResource)
+		{
+			inputText =
+				$"{inputResource}: " +
+				$"{machine.GetInputAmount(inputResource)}/{machine.MaxInput}";
+		}
+
+		string outputText =
+			$"{recipe.OutputResource}: " +
+			$"{machine.GetOutputAmount(recipe.OutputResource)}/{machine.MaxOutput}";
+
+		ObjectDetailsLabel.Text = $"""
+								  {definition.Name}
+								  
+								  Producing: {machine.IsProducing}
+								  Progress: {progress:P0}
+								  
+								  Input:
+								  {inputText}
+								  
+								  Output:
+								  {outputText}
+								  """;
+
+		PositionDetailsLabel();
+		ObjectDetailsLabel.Visible = true;
+	}
+
+	private void DrawBeltDetails(BeltInstance belt)
+	{
+		if (ObjectDetailsLabel is null)
+			return;
+
+		string itemText =
+			belt.CurrentItem?.ToString() ?? "Empty";
+
+		ObjectDetailsLabel.Text = $"""
+								   Belt
+								   
+								   Direction: {belt.BeltDirection}
+								   Item: {itemText}
+								   Progress: {belt.ItemProgress:P0}
+								   Speed: {belt.Speed:0.##}
+								   """;
+
+		PositionDetailsLabel();
+		ObjectDetailsLabel.Visible = true;
+	}
+
+	private void PositionDetailsLabel()
+	{
+		if (ObjectDetailsLabel is null)
+			return;
+
+		Vector2 mousePosition =
+			GetViewport().GetMousePosition();
+
+		ObjectDetailsLabel.Position =
+			mousePosition + new Vector2(8, 8);
+	}
+
+	private void SelectObject(BuildObjectType objectType)
+	{
 		if (_selectedObject == objectType)
 			return;
 
@@ -125,7 +245,7 @@ public partial class BuildLayer : Node2D
 		_hoveredCell = newHoveredCell;
 		QueueRedraw();
 	}
-	
+
 	// PLACE OBJECT LOGIC
 
 	private void PlaceObject(Vector2I cell)
@@ -156,7 +276,7 @@ public partial class BuildLayer : Node2D
 				break;
 		}
 	}
-	
+
 	private void PlaceMachine(
 		Vector2I cell,
 		MachineType objectType)
@@ -168,7 +288,7 @@ public partial class BuildLayer : Node2D
 
 		_machines.Add(cell, machine);
 	}
-	
+
 	private void PlaceBelt(Vector2I cell)
 	{
 		BeltInstance belt = new(
@@ -179,8 +299,7 @@ public partial class BuildLayer : Node2D
 		_belts.Add(cell, belt);
 	}
 
-	
-	
+
 	// UPDATE VISUALS
 
 	private void UpdateResourceLabel()
@@ -189,17 +308,17 @@ public partial class BuildLayer : Node2D
 			return;
 
 		ResourceLabel.Text = $"""
-			[1] Silica Extractor
-			[2] Silicon Smelter
-			[3] Crystal Grower
-			[4] Belt
-			[R] Rotate
-
-			Selected: {GetSelectedObjectName()}
-			Rotation: {_currentDirection}
-			""";
+							  [1] Silica Extractor
+							  [2] Silicon Smelter
+							  [3] Crystal Grower
+							  [4] Belt
+							  [R] Rotate
+							  
+							  Selected: {GetSelectedObjectName()}
+							  Rotation: {_currentDirection}
+							  """;
 	}
-	
+
 	private string GetSelectedObjectName()
 	{
 		return _selectedObject switch
@@ -244,7 +363,7 @@ public partial class BuildLayer : Node2D
 			DrawMachineProgress(machineRect, machine);
 		}
 	}
-	
+
 	private void DrawBelts()
 	{
 		foreach ((Vector2I cell, BeltInstance belt) in _belts)
@@ -290,11 +409,11 @@ public partial class BuildLayer : Node2D
 
 			DrawLine(end, arrowLeft, new Color(0.85f, 0.85f, 0.85f), 2);
 			DrawLine(end, arrowRight, new Color(0.85f, 0.85f, 0.85f), 2);
-			
+
 			DrawBeltItem(cell, belt);
 		}
 	}
-	
+
 	private void DrawBeltItem(Vector2I cell, BeltInstance belt)
 	{
 		if (belt.IsEmpty)
@@ -318,7 +437,7 @@ public partial class BuildLayer : Node2D
 		Vector2 start = beltRect.GetCenter() - direction * 10;
 		Vector2 end = beltRect.GetCenter() + direction * 10;
 		Vector2 itemPosition = start.Lerp(end, progress);
-		
+
 		DrawCircle(itemPosition, 4, new Color(0.9f, 0.8f, 0.3f));
 	}
 
@@ -342,20 +461,20 @@ public partial class BuildLayer : Node2D
 
 		MachineDefinition definition = MachineDatabase.Get(machine.Type);
 		RecipeDefinition recipe = definition.Recipe;
-		
+
 		float progress = (float)(
 			machine.ProductionProgress / recipe.Duration
 		);
-		
+
 		progress = Mathf.Clamp(progress, 0.0f, 1.0f);
-		
+
 		Rect2 backgroundBar = new(
 			machineRect.Position.X + 2,
 			machineRect.End.Y - 6,
 			machineRect.Size.X - 4,
 			4
 		);
-		
+
 		Rect2 filledBar = new(
 			backgroundBar.Position,
 			new Vector2(
@@ -363,7 +482,7 @@ public partial class BuildLayer : Node2D
 				backgroundBar.Size.Y
 			)
 		);
-		
+
 		DrawRect(backgroundBar, new Color(0.1f, 0.1f, 0.1f, 0.8f));
 		DrawRect(filledBar, new Color(0.9f, 0.9f, 0.9f));
 	}

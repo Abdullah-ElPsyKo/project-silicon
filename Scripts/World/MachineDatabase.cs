@@ -18,7 +18,9 @@ public static class MachineDatabase
                     outputAmount: 1,
                     outputResource: ResourceType.Silica,
                     duration: 1.0
-                    )
+                    ),
+                maxInput: 5,
+                maxOutput: 5
             ),
 
             [MachineType.SiliconSmelter] = new MachineDefinition(
@@ -31,7 +33,9 @@ public static class MachineDatabase
                     outputAmount: 1,
                     outputResource: ResourceType.Silicon,
                     duration: 1.0
-                )
+                ),
+                maxInput: 5,
+                maxOutput: 5
             ),
 
             [MachineType.CrystalGrower] = new MachineDefinition(
@@ -44,7 +48,9 @@ public static class MachineDatabase
                     outputAmount: 1,
                     outputResource: ResourceType.SiliconCrystal,
                     duration: 1.0
-                )
+                ),
+                maxInput: 5,
+                maxOutput: 5
             )
         };
     

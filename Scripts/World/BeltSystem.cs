@@ -159,9 +159,12 @@ public static class BeltSystem
                 continue;
             }
 
-            if (belt.TakeItem() is ResourceType item)
+            if (belt.CurrentItem is ResourceType item)
             {
-                destinationMachine.AddInput(item, 1);
+                if (destinationMachine.TryAddInput(item, 1))
+                {
+                    belt.TakeItem();
+                }
             }
         }
     }

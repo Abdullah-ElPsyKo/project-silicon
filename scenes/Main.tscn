@@ -9,9 +9,10 @@
 [node name="World" type="Node2D" parent="." unique_id=721214962]
 script = ExtResource("1_0bbpv")
 
-[node name="BuildLayer" type="Node2D" parent="World" unique_id=57095425 node_paths=PackedStringArray("ResourceLabel")]
+[node name="BuildLayer" type="Node2D" parent="World" unique_id=57095425 node_paths=PackedStringArray("ResourceLabel", "ObjectDetailsLabel")]
 script = ExtResource("2_rarhs")
 ResourceLabel = NodePath("../../UI/ResourceLabel")
+ObjectDetailsLabel = NodePath("../../UI/ObjectDetailsLabel")
 
 [node name="GameCamera" type="Camera2D" parent="." unique_id=1305726507]
 position = Vector2(800, 450)
@@ -26,3 +27,9 @@ offset_right = 116.0
 offset_bottom = 39.0
 theme_override_font_sizes/font_size = 24
 text = "Text: Silica: 0"
+
+[node name="ObjectDetailsLabel" type="Label" parent="UI" unique_id=70672573]
+offset_left = 1106.0
+offset_top = 5.0
+offset_right = 1146.0
+offset_bottom = 28.0

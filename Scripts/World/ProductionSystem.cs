@@ -52,11 +52,11 @@ public static class ProductionSystem
             return;
         }
 
-        machine.AddOutput(
-            recipe.OutputResource,
-            recipe.OutputAmount
-        );
-
+        if (!machine.TryAddOutput( recipe.OutputResource, recipe.OutputAmount))
+        {
+            machine.IsProducing = false;
+            return;
+        }
         machine.ProductionProgress = 0.0;
         machine.IsProducing = false;
     }
@@ -65,6 +65,14 @@ public static class ProductionSystem
         MachineInstance machine,
         RecipeDefinition recipe)
     {
+        int currentOutput =
+            machine.GetOutputAmount(recipe.OutputResource);
+
+        if (currentOutput + recipe.OutputAmount > machine.MaxOutput)
+        {
+            return false;
+        }
+        
         if (recipe.InputResource is ResourceType inputResource)
         {
             if (!machine.TryConsumeInput(
@@ -74,7 +82,6 @@ public static class ProductionSystem
                 return false;
             }
         }
-
         machine.IsProducing = true;
         return true;
     }

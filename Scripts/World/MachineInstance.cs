@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Godot;
 
 namespace ProjectSilicon.Scripts.World;
 
@@ -16,10 +17,16 @@ public sealed class MachineInstance
 
     public Direction Direction { get; }
     
+    public int MaxInput { get; private set; }
+	
+    public int MaxOutput { get; private set;}
+    
     public MachineInstance(MachineType type, Direction direction)
     {
         Type = type;
         Direction = direction;
+        MaxInput = MachineDatabase.Get(type).MaxInput;
+        MaxOutput = MachineDatabase.Get(type).MaxOutput;
     }
 
     public int GetInputAmount(ResourceType resource)
@@ -34,24 +41,26 @@ public sealed class MachineInstance
         return amount;
     }
 
-    public void AddInput(ResourceType resource, int amount)
+    public bool TryAddInput(ResourceType resource, int amount)
     {
-        if (InputBuffer.ContainsKey(resource))
-        {
-            InputBuffer[resource] += amount;
-            return;
-        }
-        InputBuffer[resource] = amount;
+        int currentAmount = GetInputAmount(resource);
+
+        if (currentAmount + amount > MaxInput)
+            return false;
+
+        InputBuffer[resource] = currentAmount + amount;
+        return true;
     }
 
-    public void AddOutput(ResourceType resource, int amount)
+    public bool TryAddOutput(ResourceType resource, int amount)
     {
-        if (OutputBuffer.ContainsKey(resource))
-        {
-            OutputBuffer[resource] += amount;
-            return;
-        }
-        OutputBuffer[resource] = amount;
+        int currentAmount = GetOutputAmount(resource);
+
+        if (currentAmount + amount > MaxOutput)
+            return false;
+
+        OutputBuffer[resource] = currentAmount + amount;
+        return true;
     }
 
     public bool TryConsumeInput(ResourceType resource, int amount)
