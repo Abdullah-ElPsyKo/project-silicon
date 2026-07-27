@@ -1,4 +1,7 @@
-﻿namespace ProjectSilicon.Scripts.World;
+﻿using ProjectSilicon.Scripts.World.Machines;
+
+namespace ProjectSilicon.Scripts.World.Build;
+
 
 public partial class BuildLayer
 {

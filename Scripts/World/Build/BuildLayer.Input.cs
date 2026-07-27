@@ -1,6 +1,6 @@
 ﻿using Godot;
 
-namespace ProjectSilicon.Scripts.World;
+namespace ProjectSilicon.Scripts.World.Build;
 
 public partial class BuildLayer
 {

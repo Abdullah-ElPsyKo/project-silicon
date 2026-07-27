@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using Godot;
+using ProjectSilicon.Scripts.World.Resources;
 
-namespace ProjectSilicon.Scripts.World;
+namespace ProjectSilicon.Scripts.World.Machines;
 
 public sealed class MachineInstance
 {

@@ -1,12 +1,14 @@
 using System.Collections.Generic;
 using Godot;
+using ProjectSilicon.Scripts.World.Belts;
+using ProjectSilicon.Scripts.World.Machines;
 
-namespace ProjectSilicon.Scripts.World;
+namespace ProjectSilicon.Scripts.World.Build;
 
 public partial class BuildLayer : Node2D
 {
 	private const int TileSize = 32;
-
+	
 	[Export] public Label? ResourceLabel { get; set; }
 	[Export] public Label? ObjectDetailsLabel { get; set; }
 

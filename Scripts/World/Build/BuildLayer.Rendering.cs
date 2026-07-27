@@ -1,6 +1,9 @@
 ﻿using Godot;
+using ProjectSilicon.Scripts.World.Belts;
+using ProjectSilicon.Scripts.World.Machines;
+using ProjectSilicon.Scripts.World.Resources;
 
-namespace ProjectSilicon.Scripts.World;
+namespace ProjectSilicon.Scripts.World.Build;
 
 public partial class BuildLayer
 {

@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using Godot;
+using ProjectSilicon.Scripts.World.Machines;
+using ProjectSilicon.Scripts.World.Resources;
 
-namespace ProjectSilicon.Scripts.World;
+namespace ProjectSilicon.Scripts.World.Belts;
 
 public static class BeltSystem
 {

@@ -1,6 +1,7 @@
 ﻿using System;
+using ProjectSilicon.Scripts.World.Resources;
 
-namespace ProjectSilicon.Scripts.World;
+namespace ProjectSilicon.Scripts.World.Belts;
 
 public class BeltInstance
 {

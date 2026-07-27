@@ -1,6 +1,7 @@
 using Godot;
+using ProjectSilicon.Scripts.World.Resources;
 
-namespace ProjectSilicon.Scripts.World;
+namespace ProjectSilicon.Scripts.World.Machines;
 
 public sealed class MachineDefinition
 {

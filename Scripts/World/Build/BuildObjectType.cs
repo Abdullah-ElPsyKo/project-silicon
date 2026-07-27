@@ -1,4 +1,4 @@
-﻿namespace ProjectSilicon.Scripts.World;
+﻿namespace ProjectSilicon.Scripts.World.Build;
 
 public enum BuildObjectType
 {
