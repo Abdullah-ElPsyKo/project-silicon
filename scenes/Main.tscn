@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bo6bllbn66xts"]
 
 [ext_resource type="Script" uid="uid://bnus3g0qjehvs" path="res://Scripts/World/GridWorld.cs" id="1_0bbpv"]
-[ext_resource type="Script" uid="uid://d2cdwtexaqr48" path="res://Scripts/World/BuildLayer.cs" id="2_rarhs"]
+[ext_resource type="Script" uid="uid://d2cdwtexaqr48" path="res://Scripts/World/Build/BuildLayer.cs" id="2_0bbpv"]
 [ext_resource type="Script" uid="uid://b4dsap2qj4xsp" path="res://Scripts/Camera/CameraController.cs" id="3_0bbpv"]
 
 [node name="Main" type="Node2D" unique_id=1407831428]
@@ -10,7 +10,7 @@
 script = ExtResource("1_0bbpv")
 
 [node name="BuildLayer" type="Node2D" parent="World" unique_id=57095425 node_paths=PackedStringArray("ResourceLabel", "ObjectDetailsLabel")]
-script = ExtResource("2_rarhs")
+script = ExtResource("2_0bbpv")
 ResourceLabel = NodePath("../../UI/ResourceLabel")
 ObjectDetailsLabel = NodePath("../../UI/ObjectDetailsLabel")
 
