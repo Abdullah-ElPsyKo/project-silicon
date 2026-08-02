@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://daq0huh5ppa7c"
-path="res://.godot/imported/belt_corner.png-f5774576a4d9517a73760739e1914a84.ctex"
+path="res://.godot/imported/belt_corner.png-c58c9017fc11ad4b12106a616ee831e1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/belt_corner.png"
-dest_files=["res://.godot/imported/belt_corner.png-f5774576a4d9517a73760739e1914a84.ctex"]
+source_file="res://Assets/Sprites/Belts/belt_corner.png"
+dest_files=["res://.godot/imported/belt_corner.png-c58c9017fc11ad4b12106a616ee831e1.ctex"]
 
 [params]
 

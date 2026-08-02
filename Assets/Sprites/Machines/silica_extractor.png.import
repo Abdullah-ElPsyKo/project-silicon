@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cn76nhvvt54gr"
-path="res://.godot/imported/silica_extactor.png-914ecbf3e82337ba32dbbbc0b9e819fd.ctex"
+path="res://.godot/imported/silica_extractor.png-4ad4ed48514223f86a1893de737e6257.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/silica_extactor.png"
-dest_files=["res://.godot/imported/silica_extactor.png-914ecbf3e82337ba32dbbbc0b9e819fd.ctex"]
+source_file="res://Assets/Sprites/Machines/silica_extractor.png"
+dest_files=["res://.godot/imported/silica_extractor.png-4ad4ed48514223f86a1893de737e6257.ctex"]
 
 [params]
 

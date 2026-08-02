@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://rhr4x5rm0w5i"
-path="res://.godot/imported/silica(quartz).png-de390382de176c21cec0e271f7be2556.ctex"
+uid="uid://ctpgh0xfp1ioi"
+path="res://.godot/imported/silicon_crystal.png-34134a3b3c72f1d7708ee14c9b2bfc25.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/silica(quartz).png"
-dest_files=["res://.godot/imported/silica(quartz).png-de390382de176c21cec0e271f7be2556.ctex"]
+source_file="res://Assets/Sprites/Resources/silicon_crystal.png"
+dest_files=["res://.godot/imported/silicon_crystal.png-34134a3b3c72f1d7708ee14c9b2bfc25.ctex"]
 
 [params]
 

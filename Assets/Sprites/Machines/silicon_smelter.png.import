@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b87731vewmtvn"
-path="res://.godot/imported/belt.png-79aae898170ff83111fe24b03b179324.ctex"
+uid="uid://hvjejb25fo7e"
+path="res://.godot/imported/silicon_smelter.png-862155b9c454c116b891a88bc1a9d189.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/belt.png"
-dest_files=["res://.godot/imported/belt.png-79aae898170ff83111fe24b03b179324.ctex"]
+source_file="res://Assets/Sprites/Machines/silicon_smelter.png"
+dest_files=["res://.godot/imported/silicon_smelter.png-862155b9c454c116b891a88bc1a9d189.ctex"]
 
 [params]
 

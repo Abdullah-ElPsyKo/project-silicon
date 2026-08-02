@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://q6skyqaujhu7"
-path="res://.godot/imported/crystal_grower.png-e0b10feacc36400763fd403c473d0c34.ctex"
+uid="uid://coqydye0ehf3l"
+path="res://.godot/imported/silicon_ingot.png-afc9d80c7194e481a7b981cabe4c4746.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/crystal_grower.png"
-dest_files=["res://.godot/imported/crystal_grower.png-e0b10feacc36400763fd403c473d0c34.ctex"]
+source_file="res://Assets/Sprites/Resources/silicon_ingot.png"
+dest_files=["res://.godot/imported/silicon_ingot.png-afc9d80c7194e481a7b981cabe4c4746.ctex"]
 
 [params]
 

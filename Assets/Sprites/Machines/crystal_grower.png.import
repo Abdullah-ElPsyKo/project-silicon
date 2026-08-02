@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ctpgh0xfp1ioi"
-path="res://.godot/imported/crystal.png-be9f29c2e46b40566ce6cf2af1fd60ee.ctex"
+uid="uid://q6skyqaujhu7"
+path="res://.godot/imported/crystal_grower.png-0c6a633d3cbc9be9cad788ce509db380.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/crystal.png"
-dest_files=["res://.godot/imported/crystal.png-be9f29c2e46b40566ce6cf2af1fd60ee.ctex"]
+source_file="res://Assets/Sprites/Machines/crystal_grower.png"
+dest_files=["res://.godot/imported/crystal_grower.png-0c6a633d3cbc9be9cad788ce509db380.ctex"]
 
 [params]
 
